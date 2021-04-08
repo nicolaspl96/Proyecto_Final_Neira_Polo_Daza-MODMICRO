@@ -31,7 +31,7 @@
 #include "sdk_hal_gpio.h"
 #include "sdk_hal_i2c0.h"
 #include "sdk_hal_i2c1.h"
-#include "sdk_hal_adc.h"
+
 #include "sdk_hal_lptmr0.h"
 #include "bme280.h"
 #include"bme280_defs.h"
@@ -40,15 +40,15 @@
 #include "sdk_pph_mma8451Q.h"
 #include "sdk_pph_ec25au.h"
 #include "sdk_pph_bme280.h"
-#include "sdk_pph_sht3x.h"
+
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
 #define HABILITAR_MODEM_EC25		1
 #define HABILITAR_SENSOR_BME280		1
 #define HABILITAR_SENSOR_MMA8451Q	1
-#define HABILITAR_ENTRADA_ADC_PTB8	1
-#define HABILITAR_SENSOR_SHT3X		1
+
+
 
 #define HABILITAR_TLPTMR0			1
 
@@ -93,8 +93,7 @@ int main(void) {
 	uint8_t ec25_estado_actual;
 	uint8_t ec25_detectado=0;
 
-	uint32_t adc_dato;
-	uint8_t adc_base_de_tiempo=0;
+
 
 	mma8451_data_t	mma8451Q_datos;
 	uint8_t mma8451Q_detectado=0;
@@ -104,9 +103,7 @@ int main(void) {
 	uint8_t bme280_detectado=0;
 	uint8_t bme280_base_de_tiempo=0;
 
-	sht3x_data_t sht3x_datos;
-	uint8_t sht3x_detectado=0;
-	uint8_t sht3x_base_de_tiempo=0;
+
 
 	float temp_float;
 	float hum_float;
@@ -114,6 +111,7 @@ int main(void) {
 	float valor_hum;
 	float press_float;
 	float valor_pres;
+
 
 
     BOARD_InitBootPins();
@@ -148,16 +146,8 @@ int main(void) {
     }
     printf("OK\r\n");
 
-#if HABILITAR_ENTRADA_ADC_PTB8
-    //Inicializa conversor analogo a digital
-    //Se debe usar  PinsTools para configurar los pines que van a ser analogicos
-    printf("Inicializa ADC:");
-    if(adcInit()!=kStatus_Success){
-    	printf("Error");
-    	return 0 ;
-    }
-    printf("OK\r\n");
-#endif
+
+
 
 #if HABILITAR_SENSOR_MMA8451Q
     printf("Detectando MMA8451Q:");
@@ -169,14 +159,7 @@ int main(void) {
     }
 #endif
 
-/*#if HABILITAR_SENSOR_SHT3X
-    printf("Detectando SHT3X:");
-    //LLamado a funcion que identifica sensor SHT3X
-    if(sht3xInit()== kStatus_Success){
-    	sht3x_detectado=1;
-    	printf("OK\r\n");
-    }
-#endif */
+
 
 #if HABILITAR_SENSOR_BME280
     printf("Detectando BME280:");
@@ -213,16 +196,6 @@ int main(void) {
     	waytTime();		//base de tiempo fija aproximadamente 200ms
 
 
-#if HABILITAR_ENTRADA_ADC_PTB8
-    	adc_base_de_tiempo++;//incrementa base de tiempo para tomar una lectura ADC
-    	if(adc_base_de_tiempo>10){	// >10 equivale aproximadamente a 2s
-    		adc_base_de_tiempo=0;	//reinicia contador de tiempo
-    		adcTomarCaptura(PTB8_ADC0_SE11_CH14, &adc_dato);	//inicia lectura por ADC y guarda en variable adc_dato
-    		printf("ADC ->");
-    		printf("PTB8:0x%X ",adc_dato);	//imprime resultado ADC
-    		printf("\r\n");	//Imprime cambio de linea
-    	}
-#endif
 
 #if HABILITAR_SENSOR_MMA8451Q
     	if(mma8451Q_detectado==1){	//Solo hace esto si preciamente fue detectado el acelerometro con el mma8451QWhoAmI();
@@ -230,11 +203,13 @@ int main(void) {
         	if(mma8451Q_base_de_tiempo>10){	//	>10 equivale aproximadamente a 2s
         		mma8451Q_base_de_tiempo=0;	//reinicia contador de tiempo
         		if(mma8451QReadAccel(&mma8451Q_datos)==kStatus_Success){	//toma lectura de ejes X,Y,Z
-        			printf("MMA8451Q ->");
-        			printf("Accel_X:0x%d ",mma8451Q_datos.x_value);	//imprime aceleración X
-        			printf("Accel_Y:0x%d ",mma8451Q_datos.y_value);	//imprime aceleración Y
-        			printf("Accel_Z:0x%d ",mma8451Q_datos.z_value);	//imprime aceleración Z
-        			printf("\r\n");	//Imprime cambio de linea
+        			//printf("MMA8451Q ->");
+        			printf("Accel_X:%d ",mma8451Q_datos.x_value);	//imprime aceleración X
+        			printf("Accel_Y:%d ",mma8451Q_datos.y_value);	//imprime aceleración Y
+        			printf("Accel_Z:%d ",mma8451Q_datos.z_value);	//imprime aceleración Z
+        			/*printf("\r\n");	//Imprime cambio de linea*/
+
+
         		}
         	}
     	}
@@ -258,32 +233,17 @@ int main(void) {
                      press_float = (float)bme280_datos.presion;
                          valor_pres= (((1100-300)*(press_float/1048576))*4);
 //
-    				printf("BME280 ->");
-        			printf(" temperatura:%f ",valor_temp);	//imprime temperatura sin procesar
+    				/*printf("BME280 ->");
+        			printf(" temperatura:%.f ",valor_temp);	//imprime temperatura sin procesar
         			printf(" humedad:%.f ",valor_hum);	//imprime humedad sin procesar
         			printf(" presion:%.f ",valor_pres);	//imprime presion sin procesar
-        			printf("\r\n");	//Imprime cambio de linea
+        			printf("\r\n");	//Imprime cambio de linea*/
     			}
     		}
     	}
 #endif
 
-#if HABILITAR_SENSOR_SHT3X
-    	if(sht3x_detectado==1){
-    		sht3x_base_de_tiempo++; //incrementa base de tiempo para tomar dato sensor SHT3X
-			if(sht3x_base_de_tiempo>10){//	>10 equivale aproximadamente a 2s
-				sht3x_base_de_tiempo=0; //reinicia contador de tiempo
-	    		if (sht3xReadData(&sht3x_datos) == kStatus_Success) {//toma lectura humedad, temperatura
-	    			printf("SHT3X ->");
-	    			printf("temperatura:0x%X ",sht3x_datos.temperatura);	//imprime temperatura sin procesar
-	    			printf("CRC8_t:0x%X ",sht3x_datos.crc_temperatura);	//imprime CRC8 de temperatura
-        			printf("humedad:0x%X ",sht3x_datos.humedad);	//imprime humedad sin procesar
-        			printf("CRC8_h:0x%X ",sht3x_datos.crc_humedad);	//imprime CRC8 de temperatura
-        			printf("\r\n");	//Imprime cambio de linea
-	    		}
-			}
-    	}
-#endif
+
 
 #if HABILITAR_MODEM_EC25
     	ec25_estado_actual = ec25Polling();	//actualiza maquina de estados encargada de avanzar en el proceso interno del MODEM
@@ -308,12 +268,17 @@ int main(void) {
     		toggleLedAzul();
     		break;
 
+    	case kFSM_ENVIANDO_MQTT_MSJ_T_H:
+    		ec25totaldata(mma8451Q_datos.x_value,mma8451Q_datos.y_value,mma8451Q_datos.z_value,valor_temp,valor_hum,valor_pres);
+    		break;
+
     	default:
     		apagarLedRojo();
     		apagarLedVerde();
     		toggleLedAzul();
     		break;
     	}
+
 #endif
     }
     return 0 ;
