@@ -223,21 +223,21 @@ int main(void) {
     			if(bme280ReadData(&bme280_datos)==kStatus_Success){	//toma lectura humedad, presion, temperatura
 
     				temp_float = (float)bme280_datos.temperatura;
-    				               valor_temp = ((-40 + 85)*(temp_float)/1048576)+9;
+    				               valor_temp = ((temp_float*5 +128)/1048576)*10;
 
 
 
     				      hum_float = (float)bme280_datos.humedad;
-    				   valor_hum = (100 * ((hum_float)/65536))+21;
+    				   valor_hum =  hum_float/332;
 
                      press_float = (float)bme280_datos.presion;
                          valor_pres= (((1100-300)*(press_float/1048576))*4);
-//
-    				/*printf("BME280 ->");
-        			printf(" temperatura:%.f ",valor_temp);	//imprime temperatura sin procesar
+//(-40 + 85)*
+    				//printf("BME280 ->");
+        			printf(" temperatura:%.1f ",valor_temp);	//imprime temperatura sin procesar
         			printf(" humedad:%.f ",valor_hum);	//imprime humedad sin procesar
         			printf(" presion:%.f ",valor_pres);	//imprime presion sin procesar
-        			printf("\r\n");	//Imprime cambio de linea*/
+        			//printf("\r\n");	//Imprime cambio de linea*/
     			}
     		}
     	}
