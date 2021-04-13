@@ -204,10 +204,10 @@ int main(void) {
         		mma8451Q_base_de_tiempo=0;	//reinicia contador de tiempo
         		if(mma8451QReadAccel(&mma8451Q_datos)==kStatus_Success){	//toma lectura de ejes X,Y,Z
         			//printf("MMA8451Q ->");
-        			printf("Accel_X:%d ",mma8451Q_datos.x_value);	//imprime aceleración X
+        			/*printf("Accel_X:%d ",mma8451Q_datos.x_value);	//imprime aceleración X
         			printf("Accel_Y:%d ",mma8451Q_datos.y_value);	//imprime aceleración Y
         			printf("Accel_Z:%d ",mma8451Q_datos.z_value);	//imprime aceleración Z
-        			/*printf("\r\n");	//Imprime cambio de linea*/
+        			printf("\r\n");	//Imprime cambio de linea*/
 
 
         		}
@@ -221,23 +221,22 @@ int main(void) {
     		if(bme280_base_de_tiempo>10){	//	>10 equivale aproximadamente a 2s
     			bme280_base_de_tiempo=0; //reinicia contador de tiempo
     			if(bme280ReadData(&bme280_datos)==kStatus_Success){	//toma lectura humedad, presion, temperatura
-
+//bme280_compensate_data
     				temp_float = (float)bme280_datos.temperatura;
-    				               valor_temp = ((temp_float*5 +128)/1048576)*10;
+    				               valor_temp = (((-40 + 85)*temp_float)/1048576)+4 ;
 
 
-
-    				      hum_float = (float)bme280_datos.humedad;
-    				   valor_hum =  hum_float/332;
+    				     hum_float = (float)bme280_datos.humedad;
+    				   valor_hum =  ((100*hum_float)/65535)+43;
 
                      press_float = (float)bme280_datos.presion;
-                         valor_pres= (((1100-300)*(press_float/1048576))*4);
-//(-40 + 85)*
+                         valor_pres= (((1100-300)*(press_float/1048576))*4)+22;
+//
     				//printf("BME280 ->");
-        			printf(" temperatura:%.1f ",valor_temp);	//imprime temperatura sin procesar
+        			/*printf(" temperatura:%.1f ",valor_temp);	//imprime temperatura sin procesar
         			printf(" humedad:%.f ",valor_hum);	//imprime humedad sin procesar
         			printf(" presion:%.f ",valor_pres);	//imprime presion sin procesar
-        			//printf("\r\n");	//Imprime cambio de linea*/
+        			printf("\r\n");	//Imprime cambio de linea*/
     			}
     		}
     	}
@@ -262,11 +261,7 @@ int main(void) {
     		apagarLedAzul();
     		break;
 
-    	case kFSM_RESULTADO_ERROR_RSSI:
-    		toggleLedRojo();
-    		apagarLedVerde();
-    		toggleLedAzul();
-    		break;
+
 
     	case kFSM_ENVIANDO_MQTT_MSJ_T_H:
     		ec25totaldata(mma8451Q_datos.x_value,mma8451Q_datos.y_value,mma8451Q_datos.z_value,valor_temp,valor_hum,valor_pres);
