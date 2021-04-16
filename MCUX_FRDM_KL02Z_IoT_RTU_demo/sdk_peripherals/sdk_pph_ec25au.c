@@ -30,7 +30,7 @@ enum _ec25_lista_ordendes{
 	kORDEN_ENVIAR_MENSAJE_MQTT,
 };
 
-#define EC25_BYTES_EN_BUFFER	100
+#define EC25_BYTES_EN_BUFFER	200
 #define EC25_BYTES_EN_BUFFER_MQTT 200
 /*******************************************************************************
  * Private Prototypes
@@ -98,7 +98,7 @@ const char  *ec25_repuestas_at[]={
 				"QMTOPEN: 0,0",		//AT+QMTOPEN=0,\"142.93.88.99\",1883
 				"QMTCONN: 0,0,0",		//AT+QMTCONN=0,\"LAB1\"
 				">",		//AT+QMTPUB=0,0,0,0,\"LAB1\"
-				"OK",		//MENSAJE & CTRL+Z
+				"0,1,0",		//MENSAJE & CTRL+Z
 				"pdpdeact",
 				"OK",
 				/*"+CSQ:",		//AT+CSQ
@@ -470,12 +470,12 @@ void enviar_data_mqtt(void){
 }
 
 
-status_t ec25totaldata(float Axis_X, float Axis_Y, float Axis_Z, float temp_data, float pres_data, float humd_data){
+status_t ec25totaldata(float Axis_X, float Axis_Y, float Axis_Z, float temp_data, float pres_data, float humd_data, uint8_t alerta){
 
 
-	sprintf(ec25_mensaje_mqtt,"EjeX,%.2f,EjeY,%.2f,EjeZ,%.2f,temp_data,%.2f,pres_data,%.2f,humd_data,%.2f,\r\n %c",Axis_X,Axis_Y,Axis_Z,temp_data,pres_data,humd_data,0x1A);
+	sprintf(ec25_mensaje_mqtt,"EjeX,%.2f,EjeY,%.2f,EjeZ,%.2f,temp_data,%.2f,pres_data,%.2f,humd_data,%.2f,alerta,%d,\r\n %c",Axis_X,Axis_Y,Axis_Z,temp_data,pres_data,humd_data,alerta,0x1A);
 
-
+     //printf("EjeX,%.2f,EjeY,%.2f,EjeZ,%.2f,temp_data,%.2f,pres_data,%.2f,humd_data,%.2f,alerta,%d,\r\n",Axis_X,Axis_Y,Axis_Z,temp_data,pres_data,humd_data,alerta);
 
 
 
@@ -500,7 +500,10 @@ uint8_t ec25Polling(void){
 	case kFSM_RESULTADO_EXITOSO:
 		//Se queda en este estado y solo se sale cuando se utilice la función ec25Inicializacion();
 		break;
+	case kFSM_RESULTADO_ERROR_QMTPUB_T_H:
+		ec25_fsm.actual=kFSM_ENVIANDO_QMTPUB_T_H;
 
+		break;
 
 
 	case kFSM_ENVIANDO_AT:
@@ -766,6 +769,7 @@ uint8_t ec25Polling(void){
 			default:
 				//para evitar bloqueos, marca error de proceso en caso de detectar un estado ilegal
 				ec25_fsm.actual = kFSM_RESULTADO_ERROR;	//se queda en resultado de error
+
 				break;
 			}
 			break;
@@ -773,11 +777,14 @@ uint8_t ec25Polling(void){
 
 
 		default:
+			if(ec25_fsm.anterior == kFSM_ENVIANDO_MQTT_MSJ_T_H){
+			            ec25_fsm.actual = kFSM_RESULTADO_ERROR_QMTPUB_T_H;
+			        }else{
 			//Si la respuesta es incorrecta, se queda en resultado de error
 			//No se cambia (ec25_fsm.anterior) para mantener en que comando AT fue que se generó error
 
 			ec25_fsm.actual = kFSM_RESULTADO_ERROR;
-
+			        }
 			break;
 		}
 	}

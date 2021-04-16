@@ -95,7 +95,7 @@ enum _fsm_ec25_state{
  ******************************************************************************/
 status_t ec25Inicializacion(void);
 status_t ec25InicializarMQTT(void);
-status_t ec25totaldata(float Axis_X, float Axis_Y, float Axis_Z, float temp_data, float pres_data, float humd_data);
+status_t ec25totaldata(float Axis_X, float Axis_Y, float Axis_Z, float temp_data, float pres_data, float humd_data, uint8_t alerta);
 uint8_t ec25Polling(void);
 
 /** @} */ // end of X group

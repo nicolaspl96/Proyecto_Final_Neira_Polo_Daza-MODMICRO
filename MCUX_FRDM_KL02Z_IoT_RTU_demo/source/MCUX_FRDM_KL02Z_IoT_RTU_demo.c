@@ -72,7 +72,7 @@
 /*******************************************************************************
  * Private Source Code
  ******************************************************************************/
-void waytTime(void) {
+void waytTime(uint32_t Time) {
 //	uint32_t tiempo = 0x1FFFF;
 //	do {
 //		tiempo--;
@@ -80,7 +80,7 @@ void waytTime(void) {
 
 
 	//espera a que hayan ocurrido por lo menos 100ms interrupciones
-	while (lptmr0GetTimeValue() < 100){
+	while (lptmr0GetTimeValue() < Time){
 	}
 	lptmr0SetTimeValue(0);		//Reset de variable contador de interrupciones
 }
@@ -89,9 +89,14 @@ void waytTime(void) {
  * @brief   Application entry point.
  */
 int main(void) {
-	uint8_t ec25_mensaje_de_texto[]="Hola desde EC25";
+ 	//uint8_t ec25_mensaje_de_texto[]="Hola desde EC25";
 	uint8_t ec25_estado_actual;
-	uint8_t ec25_detectado=0;
+	//uint8_t ec25_detectado=0;
+
+	int32_t Ejed_X=0;
+	int32_t Ejed_Y=0;
+	int32_t Ejed_Z=0;
+	uint8_t alerta=0;
 
 
 
@@ -177,10 +182,11 @@ int main(void) {
     //Inicializa todas las funciones necesarias para trabajar con el modem EC25
     printf("Inicializa modem EC25\r\n");
     ec25Inicializacion();
+    ec25InicializarMQTT();
 
     //Configura FSM de modem para enviar mensaje de texto
-    printf("Enviando mensaje de texto por modem EC25\r\n");
-    ec25EnviarMensajeDeTexto(&ec25_mensaje_de_texto[0], sizeof(ec25_mensaje_de_texto));
+   // printf("Enviando mensaje de texto por modem EC25\r\n");
+  //  ec25EnviarMensajeDeTexto(&ec25_mensaje_de_texto[0], sizeof(ec25_mensaje_de_texto));
 #endif
 
 #if HABILITAR_TLPTMR0
@@ -193,7 +199,7 @@ int main(void) {
 	//Ciclo infinito encendiendo y apagando led verde
 	//inicia SUPERLOOP
     while(1) {
-    	waytTime();		//base de tiempo fija aproximadamente 200ms
+    	waytTime(100);		//base de tiempo fija aproximadamente 200ms
 
 
 
@@ -203,12 +209,40 @@ int main(void) {
         	if(mma8451Q_base_de_tiempo>10){	//	>10 equivale aproximadamente a 2s
         		mma8451Q_base_de_tiempo=0;	//reinicia contador de tiempo
         		if(mma8451QReadAccel(&mma8451Q_datos)==kStatus_Success){	//toma lectura de ejes X,Y,Z
-        			//printf("MMA8451Q ->");
-        			/*printf("Accel_X:%d ",mma8451Q_datos.x_value);	//imprime aceleración X
-        			printf("Accel_Y:%d ",mma8451Q_datos.y_value);	//imprime aceleración Y
-        			printf("Accel_Z:%d ",mma8451Q_datos.z_value);	//imprime aceleración Z
-        			printf("\r\n");	//Imprime cambio de linea*/
 
+        			Ejed_X=mma8451Q_datos.x_value-Ejed_X;
+        			if((Ejed_X > 300) | (Ejed_X < -300)){
+        				alerta=1;
+        				Ejed_X=mma8451Q_datos.x_value;
+        			 }else{
+        			    Ejed_X=mma8451Q_datos.x_value;
+        			    alerta=0;
+        			}
+
+        			//printf("Accel_X:%d",alerta);	//imprime aceleración X
+        			//printf("dato x:%d\r\n",mma8451Q_datos.z_value);
+
+        			Ejed_Y=mma8451Q_datos.y_value-Ejed_Y;
+        			if((Ejed_Y > 400) | (Ejed_Y < -400)){
+        			        				alerta=1;
+        			        				Ejed_Y=mma8451Q_datos.y_value;
+        			        			 }else{
+        			        			    Ejed_Y=mma8451Q_datos.y_value;
+        			        			    alerta=0;
+        			        			}
+
+        		   // printf("Accel_Y:%d",alerta);	//imprime aceleración Y
+
+        			        			Ejed_Z=mma8451Q_datos.z_value-Ejed_Z;
+        			        			if((Ejed_Z > 500) | (Ejed_Z < -500)){
+        			        			        				alerta=1;
+        			        			        				Ejed_Z=mma8451Q_datos.z_value;
+        			        			        			 }else{
+        			        			        			    Ejed_Z=mma8451Q_datos.z_value;
+        			        			        			    alerta=0;
+        			        			        			}
+
+        			        		//printf("Accel_Z:%d\r\n",alerta);	//imprime aceleración Z
 
         		}
         	}
@@ -242,7 +276,7 @@ int main(void) {
     	}
 #endif
 
-
+		//ec25totaldata(mma8451Q_datos.x_value,mma8451Q_datos.y_value,mma8451Q_datos.z_value,valor_temp,valor_hum,valor_pres,alerta);
 
 #if HABILITAR_MODEM_EC25
     	ec25_estado_actual = ec25Polling();	//actualiza maquina de estados encargada de avanzar en el proceso interno del MODEM
@@ -264,7 +298,7 @@ int main(void) {
 
 
     	case kFSM_ENVIANDO_MQTT_MSJ_T_H:
-    		ec25totaldata(mma8451Q_datos.x_value,mma8451Q_datos.y_value,mma8451Q_datos.z_value,valor_temp,valor_hum,valor_pres);
+    		ec25totaldata(mma8451Q_datos.x_value,mma8451Q_datos.y_value,mma8451Q_datos.z_value,valor_temp,valor_hum,valor_pres,alerta);
     		break;
 
     	default:
